@@ -15,7 +15,7 @@ namespace Crawler.Services
 
     public class GoogleHttpClient: IGoogleHttpClient
     {
-        const string SEARCH_ENGINE = "http://www.google.com/search";
+        const string SEARCH_ENGINE = "http://www.google.com.au/search";
         const int MAX_RESULT_NUM = 100;
 
         public async Task<string> GetSearchResultFromGoogle(string searchKeyword) 
