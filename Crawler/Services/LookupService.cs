@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Linq;
+using Serilog;
 
 namespace Crawler.Services
 {
@@ -22,28 +23,22 @@ namespace Crawler.Services
 
         public async Task<string> GetOccurrence(string searchKeyword, string target)
         {
-            var searchResult = await googleHttpClient.GetSearchResultFromGoogle(searchKeyword);
-            var parsedSearchResult = ParseResult(searchResult);
-            var keywordLocation = GetKeyWordLocation(target, parsedSearchResult);
+            var searchResponseBody = await googleHttpClient.GetSearchResultFromGoogle(searchKeyword);
+            var parsedSearchResponse = ParseResponseBody(searchResponseBody);
+            var keywordLocation = GetKeyWordLocations(target, parsedSearchResponse);
             if(keywordLocation.Count == 0) {
                 return "0";
             }
 
-            string result = "";
-            foreach(var item in keywordLocation)
-            {
-                result += item.ToString() + " ";
-            }
-
+            string result = string.Join(", ", keywordLocation);
             return result.Trim();
         }
 
-        private List<int> GetKeyWordLocation(string target, List<string> lookupList)
+        private List<int> GetKeyWordLocations(string target, List<string> lookupList)
         {
             var locationList = new List<int>();
             for (int i = 0; i < lookupList.Count; i++) {
-                var normalizedItem = lookupList[i].ToLower().Replace("<b>", "").Replace("</b>", "");
-                if (normalizedItem.Contains(target.ToLower()))
+                if (lookupList[i].Contains(target.ToLower()))
                 {
                     locationList.Add(i);
                 }
@@ -51,20 +46,28 @@ namespace Crawler.Services
             return locationList;
         }
 
-        private List<string> ParseResult(string value)
+        private List<string> ParseResponseBody(string value)
         {
             string pattern = "<cite.*?>(.*?)<\\/cite>";
             var resultList = new List<string>();
-
             Regex regex = new Regex(pattern, RegexOptions.Multiline);
+
             MatchCollection collection = regex.Matches(value);
 
             foreach (Match item in collection)
             {
-                resultList.Add(item.Groups[1].Value);
+                string matchedItem;
+                if(item.Groups.Count > 1) {
+                    matchedItem = item.Groups[1].Value.NormalizeString();
+                } else {
+                    matchedItem = item.Groups[0].Value.NormalizeString();
+                }
+                
+                resultList.Add(matchedItem);
             }
 
             return resultList;
         }
     }
+
 }

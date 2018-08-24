@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Crawler.Services;
 using System.Threading.Tasks;
 using Swashbuckle.AspNetCore.Annotations;
+using Serilog;
 
 namespace Crawler.Controllers
 {
@@ -25,10 +26,9 @@ namespace Crawler.Controllers
             try {
                 return Ok(await lookupService.GetOccurrence(keyword, target));
             } catch (Exception ex) {
+                Log.Error($"ERROR: {ex.Message}");
                 throw ex;
             }
-
         }
-
     }
 }
